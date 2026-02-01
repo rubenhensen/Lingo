@@ -11,6 +11,11 @@
     background: rgba(0, 122, 229, 0.7) !important;
 }
 
+/* Different blue for 6th row (Team 2's try) */
+.lingo > tbody > tr:nth-child(6) > td {
+    background: rgba(0, 158, 255, 0.8) !important;
+}
+
 .lingo-letter {
     text-align: center;
     vertical-align: middle;
@@ -71,4 +76,12 @@
     0% { background-color: transparent; }
     65% { background-color: #ffffff; }
     100% { background-color: transparent; }
+}
+
+.active-team {
+    background-color: #fff3cd;
+    border-radius: 3px;
+    padding: 2px 4px;
+    display: inline-block;
+    border: 2px solid #ffc107;
 }

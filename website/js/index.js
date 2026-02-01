@@ -1,18 +1,46 @@
 function submitForm() {
-    Lingo.language = $("input[name=language]:checked").val();//$("input[name=language]:checked").val();
-    Lingo.time = $("input[name=time]:checked").val();
-    Lingo.letters = $("input[name=letters]:checked").val();
-    Lingo.tries = $("input[name=tries]:checked").val();
+    Lingo.language = $("input[name=language]:checked").val();
+    Lingo.time = parseInt($("input[name=time]").val()) || 30; // Read from form input
+    Lingo.letters = 5; // Start with 5 letters (Round 1)
+    Lingo.tries = 6; // 5 tries for team 1, 1 for team 2
+
+    // Get team names
+    Lingo.team1Name = $("input[name=team1name]").val().trim() || "Team 1";
+    Lingo.team2Name = $("input[name=team2name]").val().trim() || "Team 2";
+
     if($("input[name=voice]").is(":checked")) {
         Lingo.activateVoice();
     }
-    $.post(API_URL + "api/init", {amount: $("input[name=aidLetters]:checked").val(), first: $("input[name=first]").is(":checked"), start: $("select[name=start]").val(), language: Lingo.language, letters: Lingo.letters}, function (data) {
-        Lingo.rightLetters = JSON.parse(data);
-        Lingo.startLetters = JSON.parse(data);
-        $("#menu").hide();
-        $("#overlay").hide();
-        $("#game").show();
-        Lingo.init();
+
+    // Initialize team game
+    $.ajax({
+        url: API_URL + "api/init-team-game",
+        type: "POST",
+        data: {language: Lingo.language},
+        xhrFields: { withCredentials: true },
+        success: function (data) {
+            var json = JSON.parse(data);
+
+            Lingo.rightLetters = json.aidLetters;
+            Lingo.startLetters = json.aidLetters;
+            Lingo.team1Score = 0;
+            Lingo.team2Score = 0;
+            Lingo.currentTeam = 1;
+            Lingo.currentTry = 1;
+            Lingo.round = 1;
+
+            // Update team name displays
+            $(".team1-name").html(Lingo.team1Name);
+            $(".team2-name").html(Lingo.team2Name);
+
+            // Initialize bingo grids
+            Bingo.init(json.team1Grid, json.team2Grid, json.team1Filled, json.team2Filled);
+
+            $("#menu").hide();
+            $("#overlay").hide();
+            $("#game").show();
+            Lingo.init();
+        }
     });
 }
 
@@ -39,12 +67,10 @@ $("input[name=language]").click(function () {
 
 $("input").change(function () {
     localStorage.setItem("language", $("input[name=language]:checked").val());
-    localStorage.setItem("letters", $("input[name=letters]:checked").val());
-    localStorage.setItem("aidLetters", $("input[name=aidLetters]:checked").val());
-    localStorage.setItem("first", $("input[name=first]").is(":checked").toString());
-    localStorage.setItem("time", $("input[name=time]:checked").val());
-    localStorage.setItem("tries", $("input[name=tries]:checked").val());
+    localStorage.setItem("time", $("input[name=time]").val());
     localStorage.setItem("voice", $("input[name=voice]").is(":checked").toString());
+    localStorage.setItem("team1name", $("input[name=team1name]").val());
+    localStorage.setItem("team2name", $("input[name=team2name]").val());
 });
 
 /*
@@ -60,15 +86,20 @@ function showMenu() {
 }
 
 $(document).ready(function () {
+    // Enable credentials for all AJAX requests
+    $.ajaxSetup({
+        xhrFields: {
+            withCredentials: true
+        }
+    });
+
     if(localStorage.getItem("language") !== null) {
         document.l10n.requestLanguages([localStorage.getItem("language")]);
         $("input[name=language][value=" + localStorage.getItem("language") + "]").prop("checked", true);
     }
-    if(localStorage.getItem("letters") !== null) $("input[name=letters][value=" + localStorage.getItem("letters") + "]").prop("checked", true);
-    if(localStorage.getItem("aidLetters") !== null) $("input[name=aidLetters][value=" + localStorage.getItem("aidLetters") + "]").prop("checked", true);
-    if(localStorage.getItem("first") !== null) $("input[name=first]").prop("checked", localStorage.getItem("first") === "true");
-    if(localStorage.getItem("time") !== null) $("input[name=time][value=" + localStorage.getItem("time") + "]").prop("checked", true);
-    if(localStorage.getItem("tries") !== null) $("input[name=tries][value=" + localStorage.getItem("tries") + "]").prop("checked", true);
+    if(localStorage.getItem("time") !== null) $("input[name=time]").val(localStorage.getItem("time"));
+    if(localStorage.getItem("team1name") !== null) $("input[name=team1name]").val(localStorage.getItem("team1name"));
+    if(localStorage.getItem("team2name") !== null) $("input[name=team2name]").val(localStorage.getItem("team2name"));
     // if(localStorage.getItem("voice") !== null) $("input[name=voice]").prop("checked", localStorage.getItem("voice") === "true");
 
     updateLanguage();

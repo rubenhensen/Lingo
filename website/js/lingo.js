@@ -1,8 +1,8 @@
 var Lingo = {
     language: "",
     time: 0,
-    tries: 5,
-    letters: 6,
+    tries: 6, // Max 6 tries (5 for team 1, 1 for team 2)
+    letters: 5,
     startLetters: [],
     rightLetters: [],
     size: 50,
@@ -10,11 +10,24 @@ var Lingo = {
     previousContent: null,
     enterPressed: true,
 
+    // Team game state
+    currentTeam: 1,
+    currentTry: 1,
+    team1Score: 0,
+    team2Score: 0,
+    team1Name: "Team 1",
+    team2Name: "Team 2",
+    round: 1,
+    phase: "word_guess", // word_guess | number_entry | bonus_round | round_transition | game_over
+
     /**
      * Initialize the object
      */
     init: function () {
         Lingo.reset();
+
+        // Update score display to show active team
+        Lingo.updateScoreDisplay();
 
         $(".lingo-letter > div").click(function () {
             $(this).focus();
@@ -125,9 +138,16 @@ var Lingo = {
         Lingo.stopTimer();
         $(".lingo-letter > div").off("click").off("keydown").off("keyup").off("focus");
         $(".lingo > tbody").html("");
+
+        // Reset right letters to start letters (aid letters from server)
+        Lingo.rightLetters = Object.assign({}, Lingo.startLetters);
+
+        // Create rows based on tries count
         for(var i = 0; i < Lingo.tries; i++) {
             $(".lingo > tbody").append("<tr></tr>");
         }
+
+        // Create columns based on letter count
         for(var i = 0; i < Lingo.letters; i++) {
             $(".lingo > tbody > tr").append("" +
                 "<td>" +
@@ -155,12 +175,38 @@ var Lingo = {
         $('.lingo-current > td > div > div').each(function(i, selected){
             word[i] = $(selected).html().trim();
         });
-        $.post(API_URL + "api/check", { word: word.join(""), language: Lingo.language }, function (data) {
+        $.ajax({
+            url: API_URL + "api/check",
+            type: "POST",
+            data: { word: word.join(""), language: Lingo.language },
+            xhrFields: { withCredentials: true },
+            success: function (data) {
             var json = JSON.parse(data);
             if(json.error !== null){
+                // Invalid word - stay on same row, add hint letter, switch teams
                 var audio = new Audio("./audio/timeup.mp3");
                 audio.play();
+
                 alert($(".lingo-doesNotExist").html().replace("%s", json.error));
+
+                // Update aid letters (invalid word adds a hint)
+                if(json.newAidLetters) {
+                    Lingo.rightLetters = json.newAidLetters;
+                    Lingo.startLetters = json.newAidLetters;
+                }
+
+                // Switch teams
+                if(json.teamSwitch) {
+                    Lingo.currentTeam = json.currentTeam;
+                    Lingo.updateScoreDisplay();
+
+                    var previousTeam = (json.currentTeam === 1) ? Lingo.team2Name : Lingo.team1Name;
+                    var currentTeam = (json.currentTeam === 1) ? Lingo.team1Name : Lingo.team2Name;
+                    alert(previousTeam + " used invalid word. " + currentTeam + "'s turn!");
+                }
+
+                // Clear current row and repopulate with updated aid letters
+                Lingo.resetCurrentRow();
             } else {
                 //Show state of each square, one by one, 220ms after each other
                 $('.lingo-current > td > div').each(function(i, selected){
@@ -168,25 +214,290 @@ var Lingo = {
                         Lingo.showCheck(json, i, selected);
                     }, i * 220);
                 });
+
+                setTimeout(function () {
+                    if(json.win){
+                        var audio = new Audio("./audio/guesscorrect.mp3");
+                        audio.play();
+
+                        // Update scores
+                        Lingo.team1Score = json.team1Score;
+                        Lingo.team2Score = json.team2Score;
+                        Lingo.updateScoreDisplay();
+
+                        // Show points awarded
+                        var winningTeam = json.currentTeam;
+                        var teamName = (winningTeam === 1) ? Lingo.team1Name : Lingo.team2Name;
+                        alert(teamName + " guessed correctly and earned " + json.pointsAwarded + " points!");
+
+                        // Show number entry modal
+                        $("#modal-backdrop").addClass("show");
+                        Bingo.showNumberEntry(winningTeam, function(number) {
+                            $("#modal-backdrop").removeClass("show");
+
+                            // Mark the number on the grid
+                            if(Bingo.markNumber(winningTeam, number)) {
+                                // Check for Lingo
+                                if(Bingo.checkLingo(winningTeam)) {
+                                    Bingo.highlightLines(winningTeam);
+
+                                    // Award 10 points for Lingo
+                                    if(winningTeam === 1) {
+                                        Lingo.team1Score += 10;
+                                    } else {
+                                        Lingo.team2Score += 10;
+                                    }
+                                    Lingo.updateScoreDisplay();
+
+                                    var audio = new Audio("./audio/guesscorrect.mp3");
+                                    audio.play();
+
+                                    var winningTeamName = (winningTeam === 1) ? Lingo.team1Name : Lingo.team2Name;
+                                    alert("LINGO! " + winningTeamName + " completed a line and earned 10 bonus points!");
+
+                                    // Trigger bonus round
+                                    Lingo.startBonusRound(winningTeam);
+                                } else {
+                                    // No Lingo, just continue to next word
+                                    Lingo.loadNextWord();
+                                }
+                            }
+                        });
+                    } else {
+                        // Wrong guess (valid word but incorrect)
+                        if(json.gameOver) {
+                            var audio = new Audio("./audio/guessfail.mp3");
+                            audio.play();
+                            Lingo.showCorrectWord(false, json.correctWord);
+                        } else {
+                            // Update try count
+                            Lingo.currentTry = json.currentTry;
+
+                            // Check if team switched (happens on try 6)
+                            if(json.teamSwitch) {
+                                Lingo.currentTeam = json.currentTeam;
+                                Lingo.updateScoreDisplay();
+
+                                var previousTeam = (json.currentTeam === 1) ? Lingo.team2Name : Lingo.team1Name;
+                                var currentTeam = (json.currentTeam === 1) ? Lingo.team1Name : Lingo.team2Name;
+                                alert(previousTeam + " exhausted their tries. " + currentTeam + " gets final chance!");
+                            }
+
+                            Lingo.nextGuess();
+                        }
+                    }
+                }, Lingo.letters * 220);
             }
-            setTimeout(function () {
-                if(json.win){
-                    /*
-                    $('.lingo-current > td > div').each(function(i, selected){
-                        setTimeout(function () {
-                            $(selected).addClass("lingo-letter-win");
-                        }, (parseInt(Lingo.letters) * 100) - (i * 100));
-                        setTimeout(function () {
-                            $(selected).removeClass("lingo-letter-win");
-                        }, (2 * parseInt(Lingo.letters) * 100) - (i * 100));
-                    });
-                    */
-                    Lingo.nextWord(true);
-                } else {
-                    Lingo.nextGuess();
-                }
-            }, Lingo.letters * 220);
+            }
         });
+    },
+
+    updateScoreDisplay: function() {
+        $(".team1-score").html(Lingo.team1Score);
+        $(".team2-score").html(Lingo.team2Score);
+
+        // Highlight current team
+        if(Lingo.currentTeam === 1) {
+            $(".team1-score").parent().addClass("active-team");
+            $(".team2-score").parent().removeClass("active-team");
+        } else {
+            $(".team2-score").parent().addClass("active-team");
+            $(".team1-score").parent().removeClass("active-team");
+        }
+    },
+
+    loadNextWord: function(round) {
+        // Reset for next word
+        Lingo.currentTeam = 1;
+        Lingo.currentTry = 1;
+
+        // Call backend to get next word
+        var postData = {language: Lingo.language};
+        if(round !== undefined) {
+            postData.round = round;
+        }
+
+        $.ajax({
+            url: API_URL + "api/next-word",
+            type: "POST",
+            data: postData,
+            xhrFields: { withCredentials: true },
+            success: function (data) {
+                var json = JSON.parse(data);
+                Lingo.rightLetters = json.aidLetters;
+                Lingo.startLetters = json.aidLetters;
+                Lingo.letters = (json.round == 1) ? 5 : 6;
+                Lingo.reset();
+                Lingo.init();
+            }
+        });
+    },
+
+    showCorrectWord: function(won, correctWord) {
+        if(correctWord) {
+            // Word provided directly (from gameOver response)
+            $(".lingo-right").html(correctWord);
+            $("#overlay").css({
+                top: $(".lingo").position().top,
+                left: "calc(50% - " + ($(".lingo").outerWidth() / 2) + "px)",
+                height: $(".lingo").outerHeight() + $(".lingo-progress").outerHeight()
+            });
+            $("#overlay").outerWidth($(".lingo").outerWidth());
+            $("#overlay").fadeIn();
+        } else {
+            // Fallback: fetch from API (for backwards compatibility)
+            $.ajax({
+                url: API_URL + "api/right",
+                type: "POST",
+                xhrFields: { withCredentials: true },
+                success: function (data) {
+                    var json = JSON.parse(data);
+                    $(".lingo-right").html(json.word);
+                    $("#overlay").css({
+                        top: $(".lingo").position().top,
+                        left: "calc(50% - " + ($(".lingo").outerWidth() / 2) + "px)",
+                        height: $(".lingo").outerHeight() + $(".lingo-progress").outerHeight()
+                    });
+                    $("#overlay").outerWidth($(".lingo").outerWidth());
+                    $("#overlay").fadeIn();
+                }
+            });
+        }
+    },
+
+    startBonusRound: function(teamNumber) {
+        // Store which team achieved Lingo
+        Lingo.lingoTeam = teamNumber;
+
+        // Get bonus word from server
+        $.ajax({
+            url: API_URL + "api/init-bonus",
+            type: "POST",
+            xhrFields: { withCredentials: true },
+            success: function (data) {
+                var json = JSON.parse(data);
+                Bonus.start(teamNumber, json.word);
+            }
+        });
+    },
+
+    regenerateGridForTeam: function(teamNumber) {
+        // Generate new bingo grid for team that achieved Lingo
+        var newGrid = [];
+        var numbers = [];
+        for(var i = 1; i <= 25; i++) {
+            numbers.push(i);
+        }
+
+        // Shuffle numbers
+        for(var i = numbers.length - 1; i > 0; i--) {
+            var j = Math.floor(Math.random() * (i + 1));
+            var temp = numbers[i];
+            numbers[i] = numbers[j];
+            numbers[j] = temp;
+        }
+
+        // Create 5x5 grid
+        for(var row = 0; row < 5; row++) {
+            newGrid[row] = numbers.slice(row * 5, (row + 1) * 5);
+        }
+
+        // Generate pre-filled positions with max 3 per line
+        var filled = [];
+        var rowCounts = [0, 0, 0, 0, 0];
+        var colCounts = [0, 0, 0, 0, 0];
+        var diag1Count = 0;
+        var diag2Count = 0;
+
+        var allPositions = [];
+        for(var row = 0; row < 5; row++) {
+            for(var col = 0; col < 5; col++) {
+                allPositions.push([row, col]);
+            }
+        }
+
+        // Shuffle positions
+        for(var i = allPositions.length - 1; i > 0; i--) {
+            var j = Math.floor(Math.random() * (i + 1));
+            var temp = allPositions[i];
+            allPositions[i] = allPositions[j];
+            allPositions[j] = temp;
+        }
+
+        // Select 8 positions with constraints
+        for(var i = 0; i < allPositions.length && filled.length < 8; i++) {
+            var pos = allPositions[i];
+            var row = pos[0];
+            var col = pos[1];
+
+            // Check constraints
+            if(rowCounts[row] >= 3) continue;
+            if(colCounts[col] >= 3) continue;
+            if(row === col && diag1Count >= 3) continue;
+            if(row === (4 - col) && diag2Count >= 3) continue;
+
+            // Add position
+            filled.push(pos);
+            rowCounts[row]++;
+            colCounts[col]++;
+            if(row === col) diag1Count++;
+            if(row === (4 - col)) diag2Count++;
+        }
+
+        // Update Bingo state
+        if(teamNumber === 1) {
+            Bingo.team1Grid = newGrid;
+            Bingo.team1Filled = filled;
+            Bingo.team1CompletedLines = [];
+        } else {
+            Bingo.team2Grid = newGrid;
+            Bingo.team2Filled = filled;
+            Bingo.team2CompletedLines = [];
+        }
+
+        // Re-render the grid
+        Bingo.renderGrid(teamNumber);
+    },
+
+    startRound2: function() {
+        // Update round
+        Lingo.round = 2;
+        Lingo.letters = 6; // Round 2 uses 6-letter words
+        $(".current-round").html("2");
+
+        // Show transition screen
+        $("#round-transition").fadeIn();
+        $("#round-transition-number").html("2");
+
+        setTimeout(function() {
+            $("#round-transition").fadeOut(function() {
+                // Load first word of Round 2
+                Lingo.loadNextWord(2);
+            });
+        }, 3000);
+    },
+
+    showFinalScore: function() {
+        $("#final-score-overlay").fadeIn();
+        $("#team1-final-score").html(Lingo.team1Score);
+        $("#team2-final-score").html(Lingo.team2Score);
+        $("#team1-final-name").html(Lingo.team1Name);
+        $("#team2-final-name").html(Lingo.team2Name);
+
+        var winner;
+        if(Lingo.team1Score > Lingo.team2Score) {
+            winner = Lingo.team1Name;
+            $("#winner-announcement").html(Lingo.team1Name + " Wins!").css("color", "#28a745");
+        } else if(Lingo.team2Score > Lingo.team1Score) {
+            winner = Lingo.team2Name;
+            $("#winner-announcement").html(Lingo.team2Name + " Wins!").css("color", "#007bff");
+        } else {
+            winner = "Tie";
+            $("#winner-announcement").html("It's a Tie!").css("color", "#ffc107");
+        }
+
+        var audio = new Audio("./audio/guesscorrect.mp3");
+        audio.play();
     },
 
     showCheck: function (json, i, selected) {
@@ -221,7 +532,11 @@ var Lingo = {
             $('.lingo > tbody > tr').eq(index).addClass("lingo-current"); //Make current
             $('.lingo-current > td > div > div').prop("contenteditable", false).prop("tabindex", 0).attr("autocomplete", "off").prop("spellcheck", false).attr("autocorrect", "off").html(".");
             $('.lingo-current > td > div > div').each(function(i, selected){ //Set right letters
-                 $(selected).html(Lingo.rightLetters[i]);
+                 if(Lingo.rightLetters[i] !== undefined && Lingo.rightLetters[i] !== null) {
+                     $(selected).html(Lingo.rightLetters[i]);
+                 } else {
+                     $(selected).html(".");
+                 }
             });
             if(Lingo.mobile) {
                 $("div[contenteditable=false]").prop("contenteditable", true);
@@ -249,36 +564,67 @@ var Lingo = {
                 width: "100%"
             }, Lingo.time * 1000, "linear", function () {
                 Lingo.enterPressed = true;
-                setTimeout(function() {
-                    Lingo.nextGuess();
-                }, 100);
                 var audio = new Audio("./audio/timeup.mp3");
                 audio.play();
+
+                // Timeout - treat as wrong guess and switch teams
+                setTimeout(function() {
+                    Lingo.handleTimeout();
+                }, 100);
             });
         }
     },
 
-    nextWord: function (won) {
-        var audio;
-        if (won) {
-            $(".lingo-right-words").html(parseInt($(".lingo-right-words").html()) + 1);
-            audio = new Audio("./audio/guesscorrect.mp3");
-        } else {
-            audio = new Audio("./audio/guessfail.mp3");
-        }
-        audio.play();
-        $.post(API_URL + "api/right", function (data) {
-            var json = JSON.parse(data);
-            $(".lingo-right").html(json.word);
-            $("#overlay").css({
-                top: $(".lingo").position().top,
-                left: "calc(50% - " + ($(".lingo").outerWidth() / 2) + "px)",
-                height: $(".lingo").outerHeight() + $(".lingo-progress").outerHeight()
-            });
-            $("#overlay").outerWidth($(".lingo").outerWidth());
-            $("#overlay").fadeIn();
+    handleTimeout: function() {
+        // Timeout adds a hint letter, stays on same row, switches teams
+        $.ajax({
+            url: API_URL + "api/check",
+            type: "POST",
+            data: { word: "", language: Lingo.language, timeout: "true" },
+            xhrFields: { withCredentials: true },
+            success: function (data) {
+                var json = JSON.parse(data);
+
+                // Update aid letters (timeout adds a hint)
+                if(json.newAidLetters) {
+                    Lingo.rightLetters = json.newAidLetters;
+                    Lingo.startLetters = json.newAidLetters;
+                }
+
+                // Switch teams
+                if(json.teamSwitch) {
+                    Lingo.currentTeam = json.currentTeam;
+                    Lingo.updateScoreDisplay();
+
+                    var previousTeam = (json.currentTeam === 1) ? Lingo.team2Name : Lingo.team1Name;
+                    var currentTeam = (json.currentTeam === 1) ? Lingo.team1Name : Lingo.team2Name;
+                    alert(previousTeam + " timed out. " + currentTeam + "'s turn!");
+                }
+
+                // Clear current row and repopulate with updated aid letters
+                Lingo.resetCurrentRow();
+            }
         });
     },
+
+    resetCurrentRow: function() {
+        // Clear and repopulate the current row with updated aid letters
+        $('.lingo-current > td > div > div').each(function(i, selected){
+            if(Lingo.rightLetters[i] !== undefined && Lingo.rightLetters[i] !== null) {
+                $(selected).html(Lingo.rightLetters[i]);
+            } else {
+                $(selected).html(".");
+            }
+        });
+
+        // Focus first editable letter
+        $('.lingo-current > td > div > div').eq(0).trigger("click");
+
+        // Restart the timer
+        Lingo.enterPressed = false;
+        Lingo.startTimer();
+    },
+
 
     activateVoice: function () {
         if(annyang) {

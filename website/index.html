@@ -20,6 +20,8 @@
     <link rel="stylesheet" href="css/overlay.css">
     <link rel="stylesheet" href="css/menu.css">
     <link rel="stylesheet" href="css/lingo.css">
+    <link rel="stylesheet" href="css/bingo.css">
+    <link rel="stylesheet" href="css/bonus.css">
 
     <script>
         (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
@@ -52,6 +54,21 @@
         <div class="whitespace"></div>
         <div class="whitespace"></div>
         <form class="form" action="javascript:submitForm();">
+            <div class="text-center">
+                <h3>Lingo - TV Show Format</h3>
+                <p>Two teams compete in rounds of word guessing!</p>
+            </div>
+            <div class="form-group">
+                <h5>Team Names:</h5>
+                <div class="row">
+                    <div class="col-6">
+                        <input type="text" class="form-control" name="team1name" placeholder="Team 1" value="Team 1" maxlength="20">
+                    </div>
+                    <div class="col-6">
+                        <input type="text" class="form-control" name="team2name" placeholder="Team 2" value="Team 2" maxlength="20">
+                    </div>
+                </div>
+            </div>
             <div class="form-group">
                 <h5 data-l10n-id="language">Language:</h5>
                 <div class="form-check form-check-inline">
@@ -71,148 +88,6 @@
                 </div>
             </div>
             <div class="form-group">
-                <h5 data-l10n-id="letters">Letters:</h5>
-                <div class="form-check form-check-inline">
-                    <label class="form-check-label">
-                        <input class="form-check-input" type="radio" name="letters" value="5"> <span data-l10n-id="letters5">5 letters</span>
-                    </label>
-                </div>
-                <div class="form-check form-check-inline">
-                    <label class="form-check-label">
-                        <input class="form-check-input" type="radio" name="letters" value="6" checked> <span data-l10n-id="letters6">6 letters</span>
-                    </label>
-                </div>
-                <div class="form-check form-check-inline">
-                    <label class="form-check-label">
-                        <input class="form-check-input" type="radio" name="letters" value="7" checked> <span data-l10n-id="letters7">7 letters</span>
-                    </label>
-                </div>
-                <div class="form-check form-check-inline">
-                    <label class="form-check-label">
-                        <input class="form-check-input" type="radio" name="letters" value="8" checked> <span data-l10n-id="letters8">8 letters</span>
-                    </label>
-                </div>
-                <div class="form-check form-check-inline">
-                    <label class="form-check-label">
-                        <input class="form-check-input" type="radio" name="letters" value="10" checked> <span data-l10n-id="letters10">10 letters</span>
-                    </label>
-                </div>
-            </div>
-            <div class="form-group">
-                <h5 data-l10n-id="aidLetters">Aid letters:</h5>
-                <div class="form-check form-check-inline">
-                    <label class="form-check-label">
-                        <input class="form-check-input" type="radio" name="aidLetters" value="1" checked> <span data-l10n-id="aidLetters1">1 aid letter</span>
-                    </label>
-                </div>
-                <div class="form-check form-check-inline">
-                    <label class="form-check-label">
-                        <input class="form-check-input" type="radio" name="aidLetters" value="2"> <span data-l10n-id="aidLetters2">2 aid letters</span>
-                    </label>
-                </div>
-                <div class="form-check form-check-inline">
-                    <label class="form-check-label">
-                        <input class="form-check-input" type="radio" name="aidLetters" value="3"> <span data-l10n-id="aidLetters3">3 aid letters</span>
-                    </label>
-                </div>
-                <div class="form-check form-check-inline">
-                    <label class="form-check-label">
-                        <input class="form-check-input" type="radio" name="aidLetters" value="4"> <span data-l10n-id="aidLetters4">4 aid letters</span>
-                    </label>
-                </div>
-                <div class="form-check form-check-inline">
-                    <label class="form-check-label">
-                        <input class="form-check-input" type="checkbox" name="first" checked value="true"> <span data-l10n-id="aidFirst">First letter always given</span>:
-                        <select name="start">
-                            <option data-l10n-id="aidFirstLetter" value="">Random</option>
-                            <option value="A">A</option>
-                            <option value="B">B</option>
-                            <option value="C">C</option>
-                            <option value="D">D</option>
-                            <option value="E">E</option>
-                            <option value="F">F</option>
-                            <option value="G">G</option>
-                            <option value="H">H</option>
-                            <option value="I">I</option>
-                            <option value="IJ">IJ</option>
-                            <option value="J">J</option>
-                            <option value="K">K</option>
-                            <option value="L">L</option>
-                            <option value="M">M</option>
-                            <option value="N">N</option>
-                            <option value="O">O</option>
-                            <option value="P">P</option>
-                            <option value="Q">Q</option>
-                            <option value="R">R</option>
-                            <option value="S">S</option>
-                            <option value="T">T</option>
-                            <option value="U">U</option>
-                            <option value="V">V</option>
-                            <option value="W">W</option>
-                            <option value="X">X</option>
-                            <option value="Y">Y</option>
-                            <option value="Z">Z</option>
-                        </select>
-                    </label>
-                </div>
-            </div>
-            <div class="form-group">
-                <h5 data-l10n-id="time">Time:</h5>
-                <div class="form-check form-check-inline">
-                    <label class="form-check-label">
-                        <input class="form-check-input" type="radio" name="time" value="5"> <span data-l10n-id="sec5">5 sec</span>
-                    </label>
-                </div>
-                <div class="form-check form-check-inline">
-                    <label class="form-check-label">
-                        <input class="form-check-input" type="radio" name="time" value="15" checked> <span data-l10n-id="sec15">15 sec</span>
-                    </label>
-                </div>
-                <div class="form-check form-check-inline">
-                    <label class="form-check-label">
-                        <input class="form-check-input" type="radio" name="time" value="30"> <span data-l10n-id="sec30">30 sec</span>
-                    </label>
-                </div>
-                <div class="form-check form-check-inline">
-                    <label class="form-check-label">
-                        <input class="form-check-input" type="radio" name="time" value="60"> <span data-l10n-id="min1">1 min</span>
-                    </label>
-                </div>
-                <div class="form-check form-check-inline">
-                    <label class="form-check-label">
-                        <input class="form-check-input" type="radio" name="time" value="0"> <span data-l10n-id="unlimited">unlimited</span>
-                    </label>
-                </div>
-            </div>
-            <div class="form-group">
-                <h5 data-l10n-id="tries">Tries:</h5>
-                <div class="form-check form-check-inline">
-                    <label class="form-check-label">
-                        <input class="form-check-input" type="radio" name="tries" value="4"> <span data-l10n-id="tries4">4 tries</span>
-                    </label>
-                </div>
-                <div class="form-check form-check-inline">
-                    <label class="form-check-label">
-                        <input class="form-check-input" type="radio" name="tries" value="5" checked> <span data-l10n-id="tries5">5 tries</span>
-                    </label>
-                </div>
-                <div class="form-check form-check-inline">
-                    <label class="form-check-label">
-                        <input class="form-check-input" type="radio" name="tries" value="6"> <span data-l10n-id="tries6">6 tries</span>
-                    </label>
-                </div>
-                <div class="form-check form-check-inline">
-                    <label class="form-check-label">
-                        <input class="form-check-input" type="radio" name="tries" value="7"> <span data-l10n-id="tries7">7 tries</span>
-                    </label>
-                </div>
-                <div class="form-check form-check-inline">
-                    <label class="form-check-label">
-                        <input class="form-check-input" type="radio" name="tries" value="10"> <span data-l10n-id="tries10">10 tries</span>
-                    </label>
-                </div>
-            </div>
-            <div class="form-group">
                 <div class="form-check">
                     <label class="form-check-label">
                         <input class="form-check-input" type="checkbox" name="voice" value="true"> <span data-l10n-id="voice">Activate voice control</span>
@@ -220,7 +95,21 @@
                 </div>
             </div>
             <div class="form-group">
-                <button type="submit" class="btn btn-primary btn-lg btn-block" data-l10n-id="start">Start</button>
+                <h5>Time Limit (seconds):</h5>
+                <input type="number" class="form-control" name="time" placeholder="Time in seconds" value="30" min="0" max="120" required>
+                <small class="form-text text-muted">Set to 0 for no time limit</small>
+            </div>
+            <div class="alert alert-info">
+                <strong>Game Format:</strong><br>
+                - Round 1: 5-letter words until LINGO<br>
+                - Round 2: 6-letter words until LINGO<br>
+                - Team 1 gets 5 tries, Team 2 gets 1 try if Team 1 fails<br>
+                - Points: 5, 4, 3, 2, 1 based on try count<br>
+                - LINGO (complete row/column/diagonal): +10 points → Bonus Round<br>
+                - Bonus: 10-letter scrambled word (+10 correct, -5 wrong)
+            </div>
+            <div class="form-group">
+                <button type="submit" class="btn btn-primary btn-lg btn-block" data-l10n-id="start">Start Team Game</button>
             </div>
         </form>
         <!--div class="text-center">
@@ -230,14 +119,20 @@
     <div id="game" style="display: none">
         <div class="menu-header menu-header-small">
             <div class="row menu-row">
-                <div class="col-4 text-left">
+                <div class="col-3 text-left">
                     <a href="javascript:;" onclick="Lingo.reset(); showMenu();" class="btn btn-secondary" data-l10n-id="menu">Menu</a>
                 </div>
-                <div class="col-4 text-center">
+                <div class="col-2 text-center">
+                    <label class="text-primary"><strong class="team1-name">Team 1</strong><br><span class="team1-score">0</span></label>
+                </div>
+                <div class="col-2 text-center">
                     <img src="img/logo.svg" alt="Logo" style="height: 40px; width: auto">
                 </div>
-                <div class="col-4 text-right">
-                    <label class="text-primary text-lg-center" style="margin-top: -2px"><span data-l10n-id="wordsGuessed">Words guessed</span><br><span class="lingo-right-words">0</span></label>
+                <div class="col-2 text-center">
+                    <label class="text-primary"><strong class="team2-name">Team 2</strong><br><span class="team2-score">0</span></label>
+                </div>
+                <div class="col-3 text-right">
+                    <label class="text-primary"><span>Round</span> <span class="current-round">1</span></label>
                 </div>
             </div>
         </div>
@@ -251,18 +146,77 @@
                 <tr></tr>
                 <tr></tr>
                 <tr></tr>
+                <tr></tr>
                 </tbody>
             </table>
             <div class="lingo-progress">
                 <div class="lingo-progress-bar"></div>
             </div>
         </div>
+        <div class="bingo-container">
+            <div class="bingo-team">
+                <h4><span class="team1-name">Team 1</span> Bingo</h4>
+                <div id="team1-bingo"></div>
+            </div>
+            <div class="bingo-team">
+                <h4><span class="team2-name">Team 2</span> Bingo</h4>
+                <div id="team2-bingo"></div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-backdrop" id="modal-backdrop"></div>
+    <div id="number-entry-modal">
+        <h3><span id="number-entry-team">Team 1</span> Guessed Correctly!</h3>
+        <p>Enter the pulled number (1-25):</p>
+        <input type="number" id="number-input" min="1" max="25">
+        <br>
+        <button class="btn btn-primary" id="number-entry-submit">Submit</button>
+    </div>
+    <div id="bonus-overlay">
+        <div class="bonus-content">
+            <h2>BONUS ROUND!</h2>
+            <h3><span id="bonus-team">Team 1</span></h3>
+            <div id="bonus-word"></div>
+            <div id="bonus-input-container">
+                <p>Enter your guess:</p>
+                <input type="text" id="bonus-guess-input" maxlength="10">
+                <br>
+                <button class="btn btn-success btn-lg" id="bonus-submit-btn">Submit Guess</button>
+            </div>
+            <div class="bonus-instructions">
+                <p>Press <strong>SPACE</strong> to pause and guess</p>
+                <p>Correct: +10 points | Wrong: -5 points</p>
+            </div>
+        </div>
+    </div>
+    <div id="round-transition" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,100,0.95); z-index: 10000; color: white; text-align: center;">
+        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">
+            <h1 style="font-size: 72px; margin-bottom: 20px; color: #ffc107;">Round <span id="round-transition-number">2</span></h1>
+            <h2 style="font-size: 36px;">6-Letter Words</h2>
+        </div>
+    </div>
+    <div id="final-score-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); z-index: 10000; color: white; text-align: center;">
+        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 80%; max-width: 600px;">
+            <h1 style="font-size: 64px; margin-bottom: 40px; color: #ffc107;">GAME OVER!</h1>
+            <div style="display: flex; justify-content: space-around; margin: 40px 0;">
+                <div>
+                    <h3 style="font-size: 32px;" id="team1-final-name">Team 1</h3>
+                    <p style="font-size: 48px; font-weight: bold;" id="team1-final-score">0</p>
+                </div>
+                <div>
+                    <h3 style="font-size: 32px;" id="team2-final-name">Team 2</h3>
+                    <p style="font-size: 48px; font-weight: bold;" id="team2-final-score">0</p>
+                </div>
+            </div>
+            <h2 style="font-size: 48px; margin-top: 40px;" id="winner-announcement">Team 1 Wins!</h2>
+            <button class="btn btn-light btn-lg" style="margin-top: 40px;" onclick="location.reload();">Play Again</button>
+        </div>
     </div>
     <div id="overlay">
         <div>
             <span data-l10n-id="theRightWordIs">The right word was:</span><br>
             <span class="lingo-right"></span><br>
-            <button class="btn btn-primary btn-lg" onclick="showMenu();" data-l10n-id="menu">Menu</button> <button class="btn btn-primary btn-lg" onclick="submitForm();" data-l10n-id="next">Next</button>
+            <button class="btn btn-primary btn-lg" onclick="showMenu();" data-l10n-id="menu">Menu</button> <button class="btn btn-primary btn-lg" onclick="Lingo.loadNextWord(); $('#overlay').hide();" data-l10n-id="next">Next Word</button>
         </div>
     </div>
 </div>
@@ -272,6 +226,8 @@
 <script src="js/annyang.js"></script>
 <script defer src="js/l20n.js"></script>
 <script src="js/config.js"></script>
+<script src="js/bingo.js"></script>
+<script src="js/bonus.js"></script>
 <script src="js/lingo.js"></script>
 <script src="js/index.js"></script>
 </body>
