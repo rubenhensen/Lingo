@@ -20,7 +20,7 @@ $container["renderer"] = new PhpRenderer("../templates");
 $app->add(function ($request, $response, $next) {
     $response = $next($request, $response);
     return $response
-        ->withHeader('Access-Control-Allow-Origin', 'http://localhost:8001')
+        ->withHeader('Access-Control-Allow-Origin', 'http://localhost:8001, http://localhost:8000')
         ->withHeader('Access-Control-Allow-Credentials', 'true')
         ->withHeader('Access-Control-Allow-Headers', 'X-Requested-With, Content-Type, Accept, Origin, Authorization')
         ->withHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
