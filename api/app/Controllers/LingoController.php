@@ -439,8 +439,6 @@ class LingoController
      */
     public function init(ServerRequestInterface $request, ResponseInterface $response, $args)
     {
-        $response = $response->withHeader("Access-Control-Allow-Origin", "*");
-
         $language = $_POST["language"];
         $letters = $_POST["letters"];
 
@@ -484,8 +482,6 @@ class LingoController
      */
     public function initTeamGame(ServerRequestInterface $request, ResponseInterface $response, $args)
     {
-        $response = $response->withHeader("Access-Control-Allow-Origin", "*");
-
         $language = $_POST["language"];
 
         $database = new \Database();

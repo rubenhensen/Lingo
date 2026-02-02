@@ -18,17 +18,35 @@ $container["renderer"] = new PhpRenderer("../templates");
 
 // Add CORS middleware
 $app->add(function ($request, $response, $next) {
+    // Get the origin from the request
+    $origin = $request->getHeaderLine('Origin');
+
+    // If no origin, try to get it from referer
+    if (empty($origin)) {
+        $origin = '*';
+    }
+
     $response = $next($request, $response);
     return $response
-        ->withHeader('Access-Control-Allow-Origin', 'http://localhost:8001, http://localhost:8000')
+        ->withHeader('Access-Control-Allow-Origin', $origin)
         ->withHeader('Access-Control-Allow-Credentials', 'true')
         ->withHeader('Access-Control-Allow-Headers', 'X-Requested-With, Content-Type, Accept, Origin, Authorization')
         ->withHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
 });
 
-// Handle OPTIONS requests
+// Handle OPTIONS preflight requests
 $app->options('/{routes:.+}', function ($request, $response, $args) {
-    return $response;
+    $origin = $request->getHeaderLine('Origin');
+    if (empty($origin)) {
+        $origin = '*';
+    }
+
+    return $response
+        ->withHeader('Access-Control-Allow-Origin', $origin)
+        ->withHeader('Access-Control-Allow-Credentials', 'true')
+        ->withHeader('Access-Control-Allow-Headers', 'X-Requested-With, Content-Type, Accept, Origin, Authorization')
+        ->withHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS')
+        ->withStatus(200);
 });
 
 /*
