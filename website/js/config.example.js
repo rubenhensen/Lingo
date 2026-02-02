@@ -1,1 +1,1 @@
-const API_URL = "http://localhost/lingo/";
+const API_URL = "/api/";

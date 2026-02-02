@@ -17,10 +17,9 @@ services:
       context: ./website
     ports:
       - "8001:80"
-    environment:
-      - API_URL=http://localhost:8000/
     volumes:
       - ./website:/usr/share/nginx/html
+      - ./local-config.js:/usr/share/nginx/html/js/config.js
     depends_on:
       - api
     restart: unless-stopped

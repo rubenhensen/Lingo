@@ -7,9 +7,8 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Slim\Views\PhpRenderer;
 
-// Configure session for cross-origin requests
-ini_set('session.cookie_samesite', 'None');
-ini_set('session.cookie_secure', '1'); // Requires HTTPS
+// Configure session (same-site since frontend and API are on same domain)
+ini_set('session.cookie_samesite', 'Lax');
 ini_set('session.cookie_httponly', '1');
 ini_set('session.use_strict_mode', '1');
 
@@ -37,7 +36,9 @@ $app->add(function ($request, $response, $next) {
         'http://lingo.hensen.io'
     ];
 
-    $allowOrigin = in_array($origin, $allowedOrigins) ? $origin : 'http://localhost:8001';
+    // Since frontend and API are on same domain at lingo.hensen.io,
+    // allow the requesting origin if it's in our whitelist
+    $allowOrigin = in_array($origin, $allowedOrigins) ? $origin : '*';
 
     $response = $next($request, $response);
     return $response
@@ -57,7 +58,7 @@ $app->options('/{routes:.+}', function ($request, $response, $args) {
         'http://lingo.hensen.io'
     ];
 
-    $allowOrigin = in_array($origin, $allowedOrigins) ? $origin : 'http://localhost:8001';
+    $allowOrigin = in_array($origin, $allowedOrigins) ? $origin : '*';
 
     return $response
         ->withHeader('Access-Control-Allow-Origin', $allowOrigin)

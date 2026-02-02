@@ -105,4 +105,4 @@ crashlytics-build.properties
 fabric.properties
 
 vendor
-composer.lock
+composer.locklocal-config.js
