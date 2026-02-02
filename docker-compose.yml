@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  api:
+    build:
+      context: ./api
+    ports:
+      - "8000:80"
+    environment:
+      - PHP_DISPLAY_ERRORS=0
+    volumes:
+      - ./api:/var/www/html
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./website
+    ports:
+      - "8001:80"
+    environment:
+      - API_URL=http://localhost:8000/
+    volumes:
+      - ./website:/usr/share/nginx/html
+    depends_on:
+      - api
+    restart: unless-stopped

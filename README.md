@@ -172,6 +172,47 @@ Voice recognition (when enabled) listens for players spelling out letters. Uses 
 
 ---
 
+## 🐳 Docker Deployment
+
+The application is split into two containers:
+- **API**: PHP/Apache serving the REST API
+- **Frontend**: Nginx serving the static website
+
+### Local Development
+```bash
+# Build and run both containers
+docker-compose up -d
+
+# Access the game
+open http://localhost:8001
+```
+
+### Production Deployment
+```bash
+# Pull and run pre-built images from GitHub Container Registry
+docker-compose -f docker-compose.prod.yml up -d
+```
+
+### Manual Container Run
+```bash
+# Run API container
+docker run -d -p 8000:80 ghcr.io/rubenhensen/lingo-api:latest
+
+# Run Frontend container
+docker run -d -p 8001:80 ghcr.io/rubenhensen/lingo-frontend:latest
+```
+
+### GitHub Actions
+Two separate workflows automatically build and push Docker images:
+- `.github/workflows/build-api.yml` - Builds API container on changes to `api/`
+- `.github/workflows/build-frontend.yml` - Builds frontend container on changes to `website/`
+
+Images are published to GitHub Container Registry:
+- `ghcr.io/rubenhensen/lingo-api:latest`
+- `ghcr.io/rubenhensen/lingo-frontend:latest`
+
+---
+
 ## 🤝 Contributing
 
 This is a web-based version of Lingo using PHP and Javascript.
