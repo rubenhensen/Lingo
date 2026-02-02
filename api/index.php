@@ -3,6 +3,11 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Slim\Views\PhpRenderer;
 
+// Configure session for Docker/localhost cross-port requests
+ini_set('session.cookie_samesite', 'Lax');
+ini_set('session.cookie_httponly', 'true');
+ini_set('session.use_strict_mode', '1');
+
 session_start();
 
 require_once "./includes.php";
