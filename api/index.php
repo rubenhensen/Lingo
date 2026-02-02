@@ -7,9 +7,10 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Slim\Views\PhpRenderer;
 
-// Configure session for Docker/localhost cross-port requests
-ini_set('session.cookie_samesite', 'Lax');
-ini_set('session.cookie_httponly', 'true');
+// Configure session for cross-origin requests
+ini_set('session.cookie_samesite', 'None');
+ini_set('session.cookie_secure', '1'); // Requires HTTPS
+ini_set('session.cookie_httponly', '1');
 ini_set('session.use_strict_mode', '1');
 
 session_start();
@@ -27,9 +28,20 @@ $container["renderer"] = new PhpRenderer("../templates");
 
 // Add CORS middleware
 $app->add(function ($request, $response, $next) {
+    $origin = $request->getHeaderLine('Origin');
+
+    // Allow localhost for development and your domain for production
+    $allowedOrigins = [
+        'http://localhost:8001',
+        'https://lingo.hensen.io',
+        'http://lingo.hensen.io'
+    ];
+
+    $allowOrigin = in_array($origin, $allowedOrigins) ? $origin : 'http://localhost:8001';
+
     $response = $next($request, $response);
     return $response
-        ->withHeader('Access-Control-Allow-Origin', 'http://localhost:8001')
+        ->withHeader('Access-Control-Allow-Origin', $allowOrigin)
         ->withHeader('Access-Control-Allow-Credentials', 'true')
         ->withHeader('Access-Control-Allow-Headers', 'X-Requested-With, Content-Type, Accept, Origin, Authorization, Content-Length')
         ->withHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
@@ -37,8 +49,18 @@ $app->add(function ($request, $response, $next) {
 
 // Handle OPTIONS preflight requests
 $app->options('/{routes:.+}', function ($request, $response, $args) {
+    $origin = $request->getHeaderLine('Origin');
+
+    $allowedOrigins = [
+        'http://localhost:8001',
+        'https://lingo.hensen.io',
+        'http://lingo.hensen.io'
+    ];
+
+    $allowOrigin = in_array($origin, $allowedOrigins) ? $origin : 'http://localhost:8001';
+
     return $response
-        ->withHeader('Access-Control-Allow-Origin', 'http://localhost:8001')
+        ->withHeader('Access-Control-Allow-Origin', $allowOrigin)
         ->withHeader('Access-Control-Allow-Credentials', 'true')
         ->withHeader('Access-Control-Allow-Headers', 'X-Requested-With, Content-Type, Accept, Origin, Authorization, Content-Length')
         ->withHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS')
