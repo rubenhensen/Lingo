@@ -1,4 +1,8 @@
 <?php
+// Suppress deprecation warnings for Slim 3 on newer PHP versions
+error_reporting(E_ALL & ~E_DEPRECATED & ~E_STRICT);
+ini_set('display_errors', '0');
+
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Slim\Views\PhpRenderer;
@@ -10,7 +14,7 @@ ini_set('session.use_strict_mode', '1');
 
 session_start();
 
-require_once "./includes.php";
+require_once __DIR__ . "/includes.php";
 // Create and configure Slim app
 $app = new \Slim\App(["settings" => [
     "displayErrorDetails" => true,
@@ -23,33 +27,20 @@ $container["renderer"] = new PhpRenderer("../templates");
 
 // Add CORS middleware
 $app->add(function ($request, $response, $next) {
-    // Get the origin from the request
-    $origin = $request->getHeaderLine('Origin');
-
-    // If no origin, try to get it from referer
-    if (empty($origin)) {
-        $origin = '*';
-    }
-
     $response = $next($request, $response);
     return $response
-        ->withHeader('Access-Control-Allow-Origin', $origin)
+        ->withHeader('Access-Control-Allow-Origin', 'http://localhost:8001')
         ->withHeader('Access-Control-Allow-Credentials', 'true')
-        ->withHeader('Access-Control-Allow-Headers', 'X-Requested-With, Content-Type, Accept, Origin, Authorization')
+        ->withHeader('Access-Control-Allow-Headers', 'X-Requested-With, Content-Type, Accept, Origin, Authorization, Content-Length')
         ->withHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
 });
 
 // Handle OPTIONS preflight requests
 $app->options('/{routes:.+}', function ($request, $response, $args) {
-    $origin = $request->getHeaderLine('Origin');
-    if (empty($origin)) {
-        $origin = '*';
-    }
-
     return $response
-        ->withHeader('Access-Control-Allow-Origin', $origin)
+        ->withHeader('Access-Control-Allow-Origin', 'http://localhost:8001')
         ->withHeader('Access-Control-Allow-Credentials', 'true')
-        ->withHeader('Access-Control-Allow-Headers', 'X-Requested-With, Content-Type, Accept, Origin, Authorization')
+        ->withHeader('Access-Control-Allow-Headers', 'X-Requested-With, Content-Type, Accept, Origin, Authorization, Content-Length')
         ->withHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS')
         ->withStatus(200);
 });
@@ -96,6 +87,11 @@ $app->get("/login", function (ServerRequestInterface $request, ResponseInterface
     ]);
 });
 */
+
+// Test endpoint
+$app->get("/api/ping", function ($request, $response, $args) {
+    return $response->getBody()->write(json_encode(["status" => "ok", "message" => "API is running"]));
+});
 
 $app->post("/api/check", \Controllers\LingoController::class . ":check");
 $app->post("/api/init", \Controllers\LingoController::class . ":init");
