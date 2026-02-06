@@ -99,6 +99,11 @@
                 <input type="number" class="form-control" name="time" placeholder="Time in seconds" value="30" min="0" max="120" required>
                 <small class="form-text text-muted">Set to 0 for no time limit</small>
             </div>
+            <div class="form-group">
+                <h5>Bonus Round Letter Swap Interval (seconds):</h5>
+                <input type="number" class="form-control" name="bonusInterval" placeholder="Interval in seconds" value="3" min="0.5" max="10" step="0.5" required>
+                <small class="form-text text-muted">Time between letter swaps in bonus round</small>
+            </div>
             <div class="alert alert-info">
                 <strong>Game Format:</strong><br>
                 - Round 1: 5-letter words until LINGO<br>
@@ -106,7 +111,8 @@
                 - Team 1 gets 5 tries, Team 2 gets 1 try if Team 1 fails<br>
                 - Points: 5, 4, 3, 2, 1 based on try count<br>
                 - LINGO (complete row/column/diagonal): +10 points → Bonus Round<br>
-                - Bonus: 10-letter scrambled word (+10 correct, -5 wrong)
+                - Bonus: 10-letter scrambled word (+10 correct, -5 wrong)<br>
+                - Bonus controls: LEFT arrow = Team 1, RIGHT arrow = Team 2
             </div>
             <div class="form-group">
                 <button type="submit" class="btn btn-primary btn-lg btn-block" data-l10n-id="start">Start Team Game</button>
@@ -184,7 +190,7 @@
                 <button class="btn btn-success btn-lg" id="bonus-submit-btn">Submit Guess</button>
             </div>
             <div class="bonus-instructions">
-                <p>Press <strong>SPACE</strong> to pause and guess</p>
+                <p>Press <strong>LEFT (←)</strong> for Team 1 | <strong>RIGHT (→)</strong> for Team 2</p>
                 <p>Correct: +10 points | Wrong: -5 points</p>
             </div>
         </div>

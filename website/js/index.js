@@ -8,6 +8,9 @@ function submitForm() {
     Lingo.team1Name = $("input[name=team1name]").val().trim() || "Team 1";
     Lingo.team2Name = $("input[name=team2name]").val().trim() || "Team 2";
 
+    // Get bonus interval
+    Bonus.intervalTime = (parseFloat($("input[name=bonusInterval]").val()) || 3) * 1000; // Convert to milliseconds
+
     if($("input[name=voice]").is(":checked")) {
         Lingo.activateVoice();
     }
@@ -71,6 +74,7 @@ $("input").change(function () {
     localStorage.setItem("voice", $("input[name=voice]").is(":checked").toString());
     localStorage.setItem("team1name", $("input[name=team1name]").val());
     localStorage.setItem("team2name", $("input[name=team2name]").val());
+    localStorage.setItem("bonusInterval", $("input[name=bonusInterval]").val());
 });
 
 /*
@@ -100,6 +104,7 @@ $(document).ready(function () {
     if(localStorage.getItem("time") !== null) $("input[name=time]").val(localStorage.getItem("time"));
     if(localStorage.getItem("team1name") !== null) $("input[name=team1name]").val(localStorage.getItem("team1name"));
     if(localStorage.getItem("team2name") !== null) $("input[name=team2name]").val(localStorage.getItem("team2name"));
+    if(localStorage.getItem("bonusInterval") !== null) $("input[name=bonusInterval]").val(localStorage.getItem("bonusInterval"));
     // if(localStorage.getItem("voice") !== null) $("input[name=voice]").prop("checked", localStorage.getItem("voice") === "true");
 
     updateLanguage();

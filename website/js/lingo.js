@@ -235,33 +235,36 @@ var Lingo = {
                         Bingo.showNumberEntry(winningTeam, function(number) {
                             $("#modal-backdrop").removeClass("show");
 
-                            // Mark the number on the grid
-                            if(Bingo.markNumber(winningTeam, number)) {
-                                // Check for Lingo
-                                if(Bingo.checkLingo(winningTeam)) {
-                                    Bingo.highlightLines(winningTeam);
+                            // Wait before processing to prevent modal Enter from being processed in game
+                            setTimeout(function() {
+                                // Mark the number on the grid
+                                if(Bingo.markNumber(winningTeam, number)) {
+                                    // Check for Lingo
+                                    if(Bingo.checkLingo(winningTeam)) {
+                                        Bingo.highlightLines(winningTeam);
 
-                                    // Award 10 points for Lingo
-                                    if(winningTeam === 1) {
-                                        Lingo.team1Score += 10;
+                                        // Award 10 points for Lingo
+                                        if(winningTeam === 1) {
+                                            Lingo.team1Score += 10;
+                                        } else {
+                                            Lingo.team2Score += 10;
+                                        }
+                                        Lingo.updateScoreDisplay();
+
+                                        var audio = new Audio("./audio/guesscorrect.mp3");
+                                        audio.play();
+
+                                        var winningTeamName = (winningTeam === 1) ? Lingo.team1Name : Lingo.team2Name;
+                                        alert("LINGO! " + winningTeamName + " completed a line and earned 10 bonus points!");
+
+                                        // Trigger bonus round
+                                        Lingo.startBonusRound(winningTeam);
                                     } else {
-                                        Lingo.team2Score += 10;
+                                        // No Lingo, just continue to next word
+                                        Lingo.loadNextWord();
                                     }
-                                    Lingo.updateScoreDisplay();
-
-                                    var audio = new Audio("./audio/guesscorrect.mp3");
-                                    audio.play();
-
-                                    var winningTeamName = (winningTeam === 1) ? Lingo.team1Name : Lingo.team2Name;
-                                    alert("LINGO! " + winningTeamName + " completed a line and earned 10 bonus points!");
-
-                                    // Trigger bonus round
-                                    Lingo.startBonusRound(winningTeam);
-                                } else {
-                                    // No Lingo, just continue to next word
-                                    Lingo.loadNextWord();
                                 }
-                            }
+                            }, 200);
                         });
                     } else {
                         // Wrong guess (valid word but incorrect)
@@ -517,6 +520,8 @@ var Lingo = {
 
     nextGuess: function () {
         var index = $(".lingo-current").index(); //Current row index
+        var needsDelay = (index !== -1 && index >= 4); // Delay needed after team switch alert
+
         if(index !== -1){ //Check first guess (initializer)
             $('.lingo-current > td > div > div').removeAttr("contenteditable").removeAttr("tabindex"); //Disable focus and editing
 
@@ -538,14 +543,24 @@ var Lingo = {
                      $(selected).html(".");
                  }
             });
-            if(Lingo.mobile) {
-                $("div[contenteditable=false]").prop("contenteditable", true);
-                $('.lingo-current > td > div > div').eq(0).blur(); //Make sure keyboard pops up
-            }
-            $('.lingo-current > td > div > div').eq(0).trigger("click"); //Focus first letter
 
-            Lingo.enterPressed = false; //Enable enter again
-            Lingo.startTimer();
+            var activateInput = function() {
+                if(Lingo.mobile) {
+                    $("div[contenteditable=false]").prop("contenteditable", true);
+                    $('.lingo-current > td > div > div').eq(0).blur(); //Make sure keyboard pops up
+                }
+                $('.lingo-current > td > div > div').eq(0).trigger("click"); //Focus first letter
+
+                Lingo.enterPressed = false; //Enable enter again
+                Lingo.startTimer();
+            };
+
+            // Add delay if there was likely an alert before this
+            if(needsDelay) {
+                setTimeout(activateInput, 200);
+            } else {
+                activateInput();
+            }
         } else {
             Lingo.nextWord(false); //Game over
         }
@@ -617,12 +632,15 @@ var Lingo = {
             }
         });
 
-        // Focus first editable letter
-        $('.lingo-current > td > div > div').eq(0).trigger("click");
+        // Wait before allowing input to prevent alert Enter from being processed
+        setTimeout(function() {
+            // Focus first editable letter
+            $('.lingo-current > td > div > div').eq(0).trigger("click");
 
-        // Restart the timer
-        Lingo.enterPressed = false;
-        Lingo.startTimer();
+            // Restart the timer
+            Lingo.enterPressed = false;
+            Lingo.startTimer();
+        }, 200);
     },
 
 

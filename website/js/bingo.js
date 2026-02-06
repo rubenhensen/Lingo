@@ -67,7 +67,12 @@ var Bingo = {
         $("#number-entry-modal").show();
         var teamName = (teamNumber === 1) ? Lingo.team1Name : Lingo.team2Name;
         $("#number-entry-team").html(teamName);
-        $("#number-input").val("").focus();
+        $("#number-input").val("");
+
+        // Wait before focusing to prevent alert Enter from being processed
+        setTimeout(function() {
+            $("#number-input").focus();
+        }, 200);
 
         $("#number-entry-submit").off("click").on("click", function() {
             var number = parseInt($("#number-input").val());
@@ -101,12 +106,14 @@ var Bingo = {
             callback(number);
         });
 
-        // Allow Enter key to submit
-        $("#number-input").off("keypress").on("keypress", function(e) {
-            if(e.which === 13) {
-                $("#number-entry-submit").click();
-            }
-        });
+        // Allow Enter key to submit (only after delay)
+        setTimeout(function() {
+            $("#number-input").off("keypress").on("keypress", function(e) {
+                if(e.which === 13) {
+                    $("#number-entry-submit").click();
+                }
+            });
+        }, 200);
     },
 
     /**

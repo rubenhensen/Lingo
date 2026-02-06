@@ -8,6 +8,7 @@ var Bonus = {
     iteration: 0,
     animationInterval: null,
     paused: false,
+    intervalTime: 3000, // Default 3 seconds, can be set from menu
 
     /**
      * Start bonus round
@@ -15,7 +16,8 @@ var Bonus = {
     start: function(teamNumber, word) {
         Bonus.active = true;
         Bonus.correctWord = word.toUpperCase();
-        Bonus.teamNumber = teamNumber;
+        Bonus.teamNumber = teamNumber; // Default team (not used anymore)
+        Bonus.guessingTeam = null; // Track which team is currently guessing
         Bonus.iteration = 0;
         Bonus.revealedCorrect = [];
         Bonus.paused = false;
@@ -25,8 +27,7 @@ var Bonus = {
 
         // Show bonus overlay
         $("#bonus-overlay").fadeIn();
-        var teamName = (teamNumber === 1) ? Lingo.team1Name : Lingo.team2Name;
-        $("#bonus-team").html(teamName);
+        $("#bonus-team").html("Bonus Ronde");
         $("#bonus-input-container").hide();
         $("#bonus-guess-input").val("");
 
@@ -35,11 +36,16 @@ var Bonus = {
         // Start auto-reveal animation
         Bonus.startAnimation();
 
-        // Listen for space bar
+        // Listen for left/right arrow keys
         $(document).off("keydown.bonus").on("keydown.bonus", function(e) {
-            if(e.keyCode === 32 && Bonus.active && !Bonus.paused) { // Space bar
-                e.preventDefault();
-                Bonus.pause();
+            if(Bonus.active && !Bonus.paused) {
+                if(e.keyCode === 37) { // Left arrow - Team 1 guesses
+                    e.preventDefault();
+                    Bonus.pause(1);
+                } else if(e.keyCode === 39) { // Right arrow - Team 2 guesses
+                    e.preventDefault();
+                    Bonus.pause(2);
+                }
             }
         });
     },
@@ -66,8 +72,9 @@ var Bonus = {
 
     /**
      * Render the word with current scramble and revealed letters
+     * @param {Array} swapPositions - Array of two positions that were just swapped (for animation)
      */
-    renderWord: function() {
+    renderWord: function(swapPositions) {
         var container = $("#bonus-word");
         container.html("");
 
@@ -81,7 +88,19 @@ var Bonus = {
                 div.addClass("bonus-correct");
             }
 
+            // Add swap animation if this position was just swapped
+            if(swapPositions && swapPositions.indexOf(i) !== -1) {
+                div.addClass("bonus-swap");
+            }
+
             container.append(div);
+        }
+
+        // Remove swap animation after it completes
+        if(swapPositions) {
+            setTimeout(function() {
+                $(".bonus-letter").removeClass("bonus-swap");
+            }, 600);
         }
     },
 
@@ -91,7 +110,7 @@ var Bonus = {
     startAnimation: function() {
         Bonus.animationInterval = setInterval(function() {
             Bonus.revealNextPair();
-        }, 3000);
+        }, Bonus.intervalTime);
     },
 
     /**
@@ -106,6 +125,7 @@ var Bonus = {
 
     /**
      * Reveal next pair of letters (1 correct, 1 wrong)
+     * Swaps two letters: one ends up in the correct position
      */
     revealNextPair: function() {
         if(!Bonus.active || Bonus.paused) return;
@@ -124,48 +144,44 @@ var Bonus = {
             return;
         }
 
-        // Pick 1 letter to reveal correctly
-        var correctIndex = unrevealed[Math.floor(Math.random() * unrevealed.length)];
+        // Pick a position to reveal correctly
+        var targetPos = unrevealed[Math.floor(Math.random() * unrevealed.length)];
 
-        // Move this letter to its correct position
-        Bonus.scrambledPositions[correctIndex] = correctIndex;
-        Bonus.revealedCorrect.push(correctIndex);
-
-        // Pick 1 other letter and move it to a wrong position (shuffle among unrevealed)
-        if(unrevealed.length > 1) {
-            var wrongCandidates = unrevealed.filter(function(i) { return i !== correctIndex; });
-            if(wrongCandidates.length > 0) {
-                var wrongIndex = wrongCandidates[Math.floor(Math.random() * wrongCandidates.length)];
-
-                // Shuffle it to a different wrong position
-                var possiblePositions = [];
-                for(var i = 0; i < Bonus.correctWord.length; i++) {
-                    if(Bonus.revealedCorrect.indexOf(i) === -1 && i !== wrongIndex) {
-                        possiblePositions.push(i);
-                    }
-                }
-
-                if(possiblePositions.length > 0) {
-                    var newPos = possiblePositions[Math.floor(Math.random() * possiblePositions.length)];
-
-                    // Swap
-                    var temp = Bonus.scrambledPositions[wrongIndex];
-                    Bonus.scrambledPositions[wrongIndex] = Bonus.scrambledPositions[newPos];
-                    Bonus.scrambledPositions[newPos] = temp;
-                }
+        // Find where the correct letter for targetPos is currently located
+        var currentPosOfCorrectLetter = -1;
+        for(var i = 0; i < Bonus.scrambledPositions.length; i++) {
+            if(Bonus.scrambledPositions[i] === targetPos) {
+                currentPosOfCorrectLetter = i;
+                break;
             }
         }
 
+        // Swap the letters at targetPos and currentPosOfCorrectLetter
+        // This moves the correct letter to targetPos and the other letter away
+        var temp = Bonus.scrambledPositions[targetPos];
+        Bonus.scrambledPositions[targetPos] = Bonus.scrambledPositions[currentPosOfCorrectLetter];
+        Bonus.scrambledPositions[currentPosOfCorrectLetter] = temp;
+
+        // Mark targetPos as revealed
+        Bonus.revealedCorrect.push(targetPos);
+
         Bonus.iteration++;
-        Bonus.renderWord();
+
+        // Render with swap animation on the two positions that were swapped
+        Bonus.renderWord([targetPos, currentPosOfCorrectLetter]);
     },
 
     /**
      * Pause animation and show input
      */
-    pause: function() {
+    pause: function(teamNumber) {
         Bonus.paused = true;
+        Bonus.guessingTeam = teamNumber;
         Bonus.stopAnimation();
+
+        var teamName = (teamNumber === 1) ? Lingo.team1Name : Lingo.team2Name;
+        $("#bonus-team").html(teamName + " gokt!");
+
         $("#bonus-input-container").fadeIn();
         $("#bonus-guess-input").focus();
     },
@@ -175,8 +191,14 @@ var Bonus = {
      */
     resume: function() {
         Bonus.paused = false;
+        Bonus.guessingTeam = null;
+        $("#bonus-team").html("Bonus Ronde");
         $("#bonus-input-container").fadeOut();
-        Bonus.startAnimation();
+
+        // Wait before restarting animation to prevent alert Enter from being processed
+        setTimeout(function() {
+            Bonus.startAnimation();
+        }, 200);
     },
 
     /**
@@ -186,13 +208,19 @@ var Bonus = {
         var guess = $("#bonus-guess-input").val().trim().toUpperCase();
 
         if(guess.length !== Bonus.correctWord.length) {
-            alert("Please enter a " + Bonus.correctWord.length + "-letter word");
+            alert("Voer een woord van " + Bonus.correctWord.length + " letters in");
+            return;
+        }
+
+        var teamNumber = Bonus.guessingTeam;
+        if(!teamNumber) {
+            alert("Fout: geen team geselecteerd");
             return;
         }
 
         if(guess === Bonus.correctWord) {
             // Correct!
-            if(Bonus.teamNumber === 1) {
+            if(teamNumber === 1) {
                 Lingo.team1Score += 10;
             } else {
                 Lingo.team2Score += 10;
@@ -202,12 +230,12 @@ var Bonus = {
             var audio = new Audio("./audio/guesscorrect.mp3");
             audio.play();
 
-            var teamName = (Bonus.teamNumber === 1) ? Lingo.team1Name : Lingo.team2Name;
-            alert("Correct! " + teamName + " earned 10 bonus points!");
+            var teamName = (teamNumber === 1) ? Lingo.team1Name : Lingo.team2Name;
+            alert("Correct! " + teamName + " krijgt 10 bonuspunten!");
             Bonus.end(true);
         } else {
             // Wrong!
-            if(Bonus.teamNumber === 1) {
+            if(teamNumber === 1) {
                 Lingo.team1Score -= 5;
             } else {
                 Lingo.team2Score -= 5;
@@ -217,8 +245,8 @@ var Bonus = {
             var audio = new Audio("./audio/letter0.mp3");
             audio.play();
 
-            var teamName = (Bonus.teamNumber === 1) ? Lingo.team1Name : Lingo.team2Name;
-            alert("Wrong! " + teamName + " loses 5 points. Animation continues...");
+            var teamName = (teamNumber === 1) ? Lingo.team1Name : Lingo.team2Name;
+            alert("Fout! " + teamName + " verliest 5 punten. Animatie gaat verder...");
             $("#bonus-guess-input").val("");
             Bonus.resume();
         }
