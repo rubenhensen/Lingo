@@ -60,7 +60,17 @@ class LingoController
         if($isTimeout) {
             // Don't increment try, just add a hint letter and switch teams
             $_SESSION["game"]["current_team"] = ($_SESSION["game"]["current_team"] == 1) ? 2 : 1;
-            $_SESSION["game"]["aid_letter_count"] = min($_SESSION["game"]["aid_letter_count"] + 1, $_SESSION["game"]["current_word_length"]);
+
+            // Only add hint letter if more than 1 letter is still missing
+            $revealedPositions = isset($_SESSION["game"]["aid_letter_positions"])
+                ? $_SESSION["game"]["aid_letter_positions"]
+                : [];
+            $missingLetters = $_SESSION["game"]["current_word_length"] - count($revealedPositions);
+
+            // Don't add hint if only 1 letter is missing
+            if($missingLetters > 1) {
+                $_SESSION["game"]["aid_letter_count"] = min($_SESSION["game"]["aid_letter_count"] + 1, $_SESSION["game"]["current_word_length"]);
+            }
 
             $resultArray["teamSwitch"] = true;
             $resultArray["newAidLetters"] = $this->getAidLetters(
@@ -129,7 +139,17 @@ class LingoController
 
             // Invalid word - stay on same row, add hint letter, switch teams
             $_SESSION["game"]["current_team"] = ($_SESSION["game"]["current_team"] == 1) ? 2 : 1;
-            $_SESSION["game"]["aid_letter_count"] = min($_SESSION["game"]["aid_letter_count"] + 1, $_SESSION["game"]["current_word_length"]);
+
+            // Only add hint letter if more than 1 letter is still missing
+            $revealedPositions = isset($_SESSION["game"]["aid_letter_positions"])
+                ? $_SESSION["game"]["aid_letter_positions"]
+                : [];
+            $missingLetters = $_SESSION["game"]["current_word_length"] - count($revealedPositions);
+
+            // Don't add hint if only 1 letter is missing
+            if($missingLetters > 1) {
+                $_SESSION["game"]["aid_letter_count"] = min($_SESSION["game"]["aid_letter_count"] + 1, $_SESSION["game"]["current_word_length"]);
+            }
 
             $resultArray["teamSwitch"] = true;
             $resultArray["newAidLetters"] = $this->getAidLetters(
