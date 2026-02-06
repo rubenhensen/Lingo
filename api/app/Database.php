@@ -19,7 +19,7 @@ class Database
      */
     private function loadWordsFromCSV()
     {
-        $parserPath = __DIR__ . '/../../parsers';
+        $parserPath = __DIR__ . '/../parsers';
         $languages = ['Dutch' => 'nl', 'English' => 'en', 'German' => 'de'];
 
         foreach ($languages as $folder => $langCode) {
