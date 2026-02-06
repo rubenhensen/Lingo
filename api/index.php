@@ -1,7 +1,7 @@
 <?php
 // Suppress deprecation warnings for Slim 3 on newer PHP versions
 error_reporting(E_ALL & ~E_DEPRECATED & ~E_STRICT);
-ini_set('display_errors', '0');
+ini_set('display_errors', getenv('PHP_DISPLAY_ERRORS') ?: '0');
 
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -25,20 +25,61 @@ $container = $app->getContainer();
 
 $container["renderer"] = new PhpRenderer("../templates");
 
+// Add CORS headers to all responses, including errors
+$container['errorHandler'] = function ($container) {
+    return function ($request, $response, $exception) use ($container) {
+        $origin = $request->getHeaderLine('Origin');
+
+        // In dev mode, allow all origins
+        if (getenv('CORS_ALLOW_ALL') === 'true') {
+            $allowOrigin = $origin ?: '*';
+        } else {
+            $allowedOrigins = [
+                'http://localhost:8001',
+                'https://lingo.hensen.io',
+                'http://lingo.hensen.io'
+            ];
+            $allowOrigin = in_array($origin, $allowedOrigins) ? $origin : '*';
+        }
+
+        return $response
+            ->withStatus(500)
+            ->withHeader('Content-Type', 'application/json')
+            ->withHeader('Access-Control-Allow-Origin', $allowOrigin)
+            ->withHeader('Access-Control-Allow-Credentials', 'true')
+            ->withHeader('Access-Control-Allow-Headers', 'X-Requested-With, Content-Type, Accept, Origin, Authorization, Content-Length')
+            ->withHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS')
+            ->getBody()->write(json_encode([
+                'error' => $exception->getMessage(),
+                'file' => $exception->getFile(),
+                'line' => $exception->getLine()
+            ]));
+    };
+};
+
+$container['phpErrorHandler'] = function ($container) {
+    return $container['errorHandler'];
+};
+
 // Add CORS middleware
 $app->add(function ($request, $response, $next) {
     $origin = $request->getHeaderLine('Origin');
 
-    // Allow localhost for development and your domain for production
-    $allowedOrigins = [
-        'http://localhost:8001',
-        'https://lingo.hensen.io',
-        'http://lingo.hensen.io'
-    ];
+    // In dev mode (CORS_ALLOW_ALL=true), allow all origins
+    if (getenv('CORS_ALLOW_ALL') === 'true') {
+        $allowOrigin = $origin ?: '*';
+    } else {
+        // Allow localhost for development and your domain for production
+        $allowedOrigins = [
+            'http://localhost:8001',
+            'https://lingo.hensen.io',
+            'http://lingo.hensen.io'
+        ];
 
-    // Since frontend and API are on same domain at lingo.hensen.io,
-    // allow the requesting origin if it's in our whitelist
-    $allowOrigin = in_array($origin, $allowedOrigins) ? $origin : '*';
+        // Since frontend and API are on same domain at lingo.hensen.io,
+        // allow the requesting origin if it's in our whitelist
+        $allowOrigin = in_array($origin, $allowedOrigins) ? $origin : '*';
+    }
 
     $response = $next($request, $response);
     return $response
@@ -52,13 +93,18 @@ $app->add(function ($request, $response, $next) {
 $app->options('/{routes:.+}', function ($request, $response, $args) {
     $origin = $request->getHeaderLine('Origin');
 
-    $allowedOrigins = [
-        'http://localhost:8001',
-        'https://lingo.hensen.io',
-        'http://lingo.hensen.io'
-    ];
+    // In dev mode (CORS_ALLOW_ALL=true), allow all origins
+    if (getenv('CORS_ALLOW_ALL') === 'true') {
+        $allowOrigin = $origin ?: '*';
+    } else {
+        $allowedOrigins = [
+            'http://localhost:8001',
+            'https://lingo.hensen.io',
+            'http://lingo.hensen.io'
+        ];
 
-    $allowOrigin = in_array($origin, $allowedOrigins) ? $origin : '*';
+        $allowOrigin = in_array($origin, $allowedOrigins) ? $origin : '*';
+    }
 
     return $response
         ->withHeader('Access-Control-Allow-Origin', $allowOrigin)

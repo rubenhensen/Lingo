@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   api:
     build:
@@ -7,7 +5,8 @@ services:
     ports:
       - "8000:80"
     environment:
-      - PHP_DISPLAY_ERRORS=0
+      - PHP_DISPLAY_ERRORS=1
+      - CORS_ALLOW_ALL=true
     volumes:
       - ./api:/var/www/html
     restart: unless-stopped
