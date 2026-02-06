@@ -467,7 +467,8 @@ class LingoController
         //var_dump($randomLetters);
 
         foreach($randomLetters as $letter) {
-            $aidLetters[$letter] = ($wordArray[$letter] == "|" ? "IJ" : $wordArray[$letter]); //Convert | back to IJ
+            $letterValue = ($wordArray[$letter] == "|" ? "IJ" : $wordArray[$letter]); //Convert | back to IJ
+            $aidLetters[$letter] = strtoupper($letterValue);
         }
         return $response->getBody()->write(json_encode($aidLetters));
     }
@@ -644,7 +645,8 @@ class LingoController
 
         // Build aid letters array from ALL revealed positions
         foreach($allRevealedPositions as $position) {
-            $aidLetters[$position] = ($wordArray[$position] == "|" ? "IJ" : $wordArray[$position]);
+            $letter = ($wordArray[$position] == "|" ? "IJ" : $wordArray[$position]);
+            $aidLetters[$position] = strtoupper($letter);
         }
 
         return $aidLetters;
